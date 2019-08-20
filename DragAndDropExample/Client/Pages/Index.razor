@@ -1,0 +1,31 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<Calendar DataSource="@DataSource" OnDropEvent="@((CalendarItemDropEvent<string> item) => OnDrop(item))" OnDateChangedEvent="@UpdateDate">
+    <DataTemplate>
+        <BSBadge>
+            @context.Item
+        </BSBadge>
+    </DataTemplate>
+</Calendar>
+@code {
+    public List<CalendarItem<string>> DataSource { get; set; } = new List<CalendarItem<string>>();
+
+    private async void UpdateDate(Tuple<DateTime, DateTime> dates)
+    {
+        var dateEvent = new DateChangedEvent() { StartDate = dates.Item1, EndDate = dates.Item2 };
+        DataSource = await Http.PostJsonAsync<List<CalendarItem<string>>>("api/WeatherForecast/GetDates", dateEvent);
+        this.StateHasChanged();
+    }
+
+    private void OnDrop(CalendarItemDropEvent<string> item)
+    {
+        Console.WriteLine(item.Item.Item);
+        Console.WriteLine("Old date: {0}", item.Item.Date);
+        Console.WriteLine("New date: {0}", item.NewDate);
+
+        //Do some date validation
+        item.Item.Date = item.NewDate;
+        this.StateHasChanged();
+    }
+}
